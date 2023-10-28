@@ -2,7 +2,7 @@
 use crate::{
     config::MAX_SYSCALL_NUM,
     task::{exit_current_and_run_next, suspend_current_and_run_next, TaskStatus},
-    timer::get_time_us,
+    timer::{get_time_us, get_time_ms},
 };
 
 #[repr(C)]
@@ -53,5 +53,15 @@ pub fn sys_get_time(ts: *mut TimeVal, _tz: usize) -> isize {
 /// YOUR JOB: Finish sys_task_info to pass testcases
 pub fn sys_task_info(_ti: *mut TaskInfo) -> isize {
     trace!("kernel: sys_task_info");
-    -1
+    let current_time_ms = get_time_ms();
+    let running_duration_ms = current_time_ms - crate::task::get_current_first_run_time_ms();
+
+    unsafe {
+        *_ti = TaskInfo {
+            status: crate::task::get_current_status(),
+            syscall_times: crate::task::get_current_syscall_times(),
+            time: running_duration_ms,
+        };
+    }
+    0
 }
